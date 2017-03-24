@@ -18,8 +18,9 @@ function menu {
             echo "Which Git repo would you like to clone onto the image?"
             echo "Give your response in the form of USERNAME/REPOSITORY (ex. TehTotalPwnage/DLEMP)"
             read repo
-            docker build --build-arg REPO=$repo -t=$repo .
+            docker build --build-arg REPO="git@github.com:$repo" -t=$repo .
             echo "Docker image built successfully!"
+            sleep 5
             menu
             ;;
         2)
@@ -38,12 +39,21 @@ function menu {
             echo "Which Git repo do you want to use for the server image builds?"
             echo "Give your response in the form of USERNAME/REPOSITORY (ex. TehTotalPwnage/DLEMP)"
             read repo
+            ;;
         4)
+            echo "Function still in development."
+            menu
+            ;;
+        5)
             echo "Now exiting..."
             echo "If you like this project, please star it on GitHub: https://github.com/TehTotalPwnage/DLEMP"
             echo "If you'd like to support me, consider donating on Patreon: https://patreon.com/tehtotalpwnage"
             exit 0
             ;;
         *)
+            echo "Unrecognized command. Please enter another command."
+            menu
+            ;;
     esac
 }
+menu

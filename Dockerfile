@@ -4,6 +4,7 @@ FROM debian:jessie
 MAINTAINER tehtotalpwnage "tehtotalpwnage@gmail.com"
 
 # Ignore interaction when installing via APT (needed for MySQL).
+ARG REPO
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Run all package installation steps.
