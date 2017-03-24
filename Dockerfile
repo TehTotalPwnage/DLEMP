@@ -1,4 +1,4 @@
-# Dockerfile for LEMP stack for my TehTotalPwnage.io personal container.
+# Dockerfile for LEMP stack.
 FROM debian:jessie
 
 MAINTAINER tehtotalpwnage "tehtotalpwnage@gmail.com"
