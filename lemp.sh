@@ -10,17 +10,16 @@ help() {
 }
 
 start() {
-    mysqld &
+    mysqld_safe &
     PID[0]=$!
-    if [ $1 = "dev" ];
-    then
+    php5-fpm -R &
+    PID[1]=$!
+    if [ $1 = "dev" ]; then
         echo "Starting container in development mode"
         nginx -c /etc/nginx/nginx.dev.conf &
     else
         nginx &
     fi
-    PID[1]=$!
-    php5-fpm &
     PID[2]=$!
 
     for process in ${PID}

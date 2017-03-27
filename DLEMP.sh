@@ -18,21 +18,44 @@ function menu {
             echo "Which Git repo would you like to clone onto the image?"
             echo "Give your response in the form of USERNAME/REPOSITORY (ex. TehTotalPwnage/DLEMP)"
             read repo
-            docker build --build-arg REPO="git@github.com:$repo" -t=$repo .
-            echo "Docker image built successfully!"
-            sleep 5
+            git clone "git@github.com:$repo" repo
+            tag=${repo:`expr index "$repo" /`:256}
+            docker build -t=${tag,,} .
+            if [ $? != 0 ]; then
+                echo "Error on Docker image build..."
+            else
+                echo "Docker image built successfully!"
+            fi
+            rm -rf repo
+            echo "Press any key to continue..."
+            read -n 1
             menu
             ;;
         2)
             echo "Deploying Docker container..."
             echo "Which image do you want to base the container off of?"
             read image
+            echo "Which external port do you want to bind to the container?"
+            read port
             echo "Do you want to link a development volume to the container? Leave blank or provide a path:"
-            read $volume
+            read volume
             if [ -n "$volume" ]; then
                 echo "Should this container boot to the development environment setup by default? 1) Yes 2) No"
+                read startup
+                if [ $startup == 1 ]; then
+                    docker create --name "${image}_lemp" --publish $port:80 --volume $volume:/srv/mnt $image start dev
+                else
+                    docker create --name "${image}_lemp" --publish $port:80 --volume $volume:/srv/mnt $image
+                fi
+            else
+                docker create --name "${image}_lemp" --publish $port:80 $image
             fi
-            docker run --detach --name $image $image
+            if [ $? != 0 ]; then
+                echo "Error on Docker container deployment... Press any key to continue..."
+            else
+                echo "Docker container deployed successfully! Press any key to continue..."
+            fi
+            read -n 1
             menu
             ;;
         3)
