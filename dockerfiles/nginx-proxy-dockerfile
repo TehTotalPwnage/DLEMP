@@ -1,0 +1,22 @@
+# Dockerfile for NGINX proxy as part of the DLEMP environment.
+FROM debian:jessie
+
+MAINTAINER tehtotalpwnage "tehtotalpwnage@gmail.com"
+
+# Run all package installation steps.
+RUN apt-get update
+RUN apt-get install -y nginx
+
+# Sets up the server environment.
+COPY config/nginx/ /etc/nginx/
+
+# Run postinstallation scripts.
+RUN mkdir -p /srv/logs/
+
+# Expose NGINX listening port.
+EXPOSE 443
+
+# Entrypoint and CMD.
+ENTRYPOINT ["/bin/bash"]
+
+CMD ["nginx"]

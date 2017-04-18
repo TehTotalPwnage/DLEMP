@@ -16,7 +16,6 @@ RUN apt-get install -y nginx
 
 # Sets up the server environment.
 COPY config/nginx/ /etc/nginx/
-COPY config/php/ /etc/php/5/fpm/
 COPY config/php/ /etc/php5/fpm/
 COPY lemp.sh /usr/local/bin/lemp
 
