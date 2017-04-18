@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function menu {
-    if [ -n $1 ]; then
+    if [[ $# -eq 0 ]]; then
         clear
         echo "The Docker LEMP Container Management Program (DLEMP)"
         echo "Created by Michael Nguyen (TehTotalPwnage)"
@@ -9,11 +9,12 @@ function menu {
         echo "-------"
         echo "1) Build Docker Image"
         echo "2) Deploy Docker Container"
-        echo "3) Save Build Configuration"
-        echo "4) Setup Dev Environment"
-        echo "5) Update Package Sources"
-        echo "6) Edit Settings"
-        echo "7) Exit"
+        echo "3) Deploy Development Environment"
+        echo "4) Save Build Configuration"
+        echo "5) Setup Dev Environment"
+        echo "6) Update Package Sources"
+        echo "7) Edit Settings"
+        echo "8) Exit"
         read -n 1 input
     fi
     case "$1$input" in
@@ -60,11 +61,29 @@ function menu {
             pause
             ;;
         3)
+            echo "Deploying development environment..."
+            echo "What is the absolute path to the development directory? (ex. /home/tehtotalpwnage/git/DLEMP)"
+            read path
+            # tag=${path:`expr index "$path" /`:256}
+            tag=${path##/*/}
+            docker build -f dockerfiles/dev-dockerfile -t=${tag,,} .
+            echo "Deploying Docker container..."
+            echo "Which external port do you want to bind to the container?"
+            read port
+            docker create --name "${tag,,}_dev" --publish $port:80 --volume $path:/srv/mnt ${tag,,} start dev
+            if [ $? != 0 ]; then
+                echo "Error on development container deployment..."
+            else
+                echo "Development container deployed successfully!"
+            fi
+            pause
+            ;;
+        4)
             echo "Which Git repo do you want to use for the server image builds?"
             echo "Give your response in the form of USERNAME/REPOSITORY (ex. TehTotalPwnage/DLEMP)"
             read repo
             ;;
-        4)
+        5)
             echo "Setting up development environment..."
             echo "Would you like to update the dependencies first (1) or install the environment now (2)?"
             read -n 1 install
@@ -86,17 +105,17 @@ function menu {
                     ;;
             esac
             ;;
-        5)
+        6)
             echo "Running the update script..."
             docker build -t=dlemp_mysql
             echo "Dependencies updated!"
             pause
             ;;
-        6)
+        7)
             echo "Function is a work in progress. Come back later!"
             pause
             ;;
-        7)
+        8)
             echo "Now exiting..."
             echo "If you like this project, please star it on GitHub: https://github.com/TehTotalPwnage/DLEMP"
             echo "If you'd like to support me, consider donating on Patreon: https://patreon.com/tehtotalpwnage"
