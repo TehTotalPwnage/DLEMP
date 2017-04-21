@@ -66,11 +66,11 @@ function menu {
             read path
             # tag=${path:`expr index "$path" /`:256}
             tag=${path##/*/}
-            docker build -f dockerfiles/dev-dockerfile -t=${tag,,} .
+            docker build -f "$(dirname $0)/dockerfiles/dev-dockerfile" -t=${tag,,} "$(dirname $0)"
             echo "Deploying Docker container..."
             echo "Which external port do you want to bind to the container?"
             read port
-            docker create --name "${tag,,}_dev" --publish $port:80 --volume $path:/srv/mnt ${tag,,} start dev
+            docker create --name "${tag,,}_dev" --publish $port:80 --volume $path:/srv/mnt ${tag,,}
             if [ $? != 0 ]; then
                 echo "Error on development container deployment..."
             else
