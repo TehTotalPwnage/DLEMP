@@ -11,9 +11,9 @@ function menu {
         echo "2) Deploy Docker Container"
         echo "3) Deploy Development Environment"
         echo "4) Save Build Configuration"
-        echo "5) Setup Dev Environment"
+        echo "5) Setup Production Environment"
         echo "6) Update Package Sources"
-        echo "7) Edit Settings"
+        echo "7) Install Package Dependencies"
         echo "8) Exit"
         read -n 1 input
     fi
@@ -112,7 +112,43 @@ function menu {
             pause
             ;;
         7)
-            echo "Function is a work in progress. Come back later!"
+            echo "Installing dependencies..."
+            echo "Updating repositories..."
+            echo "Installing additional kernel storage drivers for Docker..."
+            sudo apt-get install linux-image-extra-"$(uname -r)" linux-image-extra-virtual
+            echo "Preparing repository dependencies..."
+            sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
+            echo "Adding GPG key for Docker repository..."
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+            echo "Printing key, please verify that the fingerprint is as follows:"
+            echo "9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88"
+            sudo apt-key fingerprint 0EBFCD88
+            echo "If the key matches, type Y. If not, type n. (Y/n)"
+            read -n 1 match
+            case "$match" in
+                "Y")
+                    ;&
+                "y")
+                    echo "Adding APT repository for Docker..."
+                    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+                    echo "Reloading package index..."
+                    sudo apt-get update
+                    echo "Installing Docker..."
+                    sudo apt-get install docker-ce
+                    echo "Testing Docker installation..."
+                    sudo docker run hello-world
+                    echo "Now running postinstallation steps..."
+                    echo "Adding nonroot access permissions..."
+                    sudo groupadd docker
+                    sudo usermod -aG docker $USER
+                    echo "Configuring Docker to run at boot..."
+                    sudo systemctl enable docker
+                    echo "Complete! Please relog into the system to save your changes..."
+                    ;;
+                *)
+                    echo "Fingerprint doesn't match. Terminating to prevent security concerns."
+                    ;;
+            esac
             pause
             ;;
         8)
