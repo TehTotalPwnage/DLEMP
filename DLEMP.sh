@@ -1,5 +1,17 @@
 #!/bin/bash
 
+# Copyright 2017 Michael Nguyen
+#
+# This file is part of DLEMP.
+#
+# DLEMP is free software: you can redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# DLEMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with DLEMP. If not, see http://www.gnu.org/licenses/.
+
 function menu {
     if [[ $# -eq 0 ]]; then
         clear
@@ -11,10 +23,8 @@ function menu {
         echo "2) Deploy Docker Container"
         echo "3) Deploy Development Environment"
         echo "4) Save Build Configuration"
-        echo "5) Setup Production Environment"
-        echo "6) Update Package Sources"
-        echo "7) Install Package Dependencies"
-        echo "8) Exit"
+        echo "5) Install Package Dependencies"
+        echo "6) Exit"
         read -n 1 input
     fi
     case "$1$input" in
@@ -25,7 +35,7 @@ function menu {
             read repo
             git clone "git@github.com:$repo" repo
             tag=${repo:`expr index "$repo" /`:256}
-            docker build -t=${tag,,} .
+            docker build --no-cache -t=${tag,,} .
             if [ $? != 0 ]; then
                 echo "Error on Docker image build..."
             else
@@ -84,34 +94,6 @@ function menu {
             read repo
             ;;
         5)
-            echo "Setting up development environment..."
-            echo "Would you like to update the dependencies first (1) or install the environment now (2)?"
-            read -n 1 install
-            case $install in
-                1)
-                    menu 5
-                    ;&
-                2)
-                    echo "Installing..."
-                    echo "Deploying MySQL container..."
-                    docker create --name dlemp_mysql_container --publish 3306:3306 dlemp_mysql
-                    echo "MySQL deployment successful!"
-                    echo "Environment setup successful!"
-                    pause
-                    ;;
-                *)
-                    echo "Unrecognized command. Please enter another command."
-                    pause
-                    ;;
-            esac
-            ;;
-        6)
-            echo "Running the update script..."
-            docker build -t=dlemp_mysql
-            echo "Dependencies updated!"
-            pause
-            ;;
-        7)
             echo "Installing dependencies..."
             echo "Updating repositories..."
             echo "Installing additional kernel storage drivers for Docker..."
@@ -151,7 +133,7 @@ function menu {
             esac
             pause
             ;;
-        8)
+        6)
             echo "Now exiting..."
             echo "If you like this project, please star it on GitHub: https://github.com/TehTotalPwnage/DLEMP"
             echo "If you'd like to support me, consider donating on Patreon: https://patreon.com/tehtotalpwnage"
@@ -170,6 +152,19 @@ function pause {
     read -n 1
 }
 
-while true; do
-    menu
-done
+case "$1" in
+    "cp")
+        mkdir -p /tmp/dlemp
+        docker cp "$2" /tmp/dlemp/tmpcp
+        editor /tmp/dlemp/tmpcp
+        docker cp /tmp/dlemp/tmpcp "$2"
+        ;;
+    "bash")
+        docker exec -it "$2" /bin/bash
+        ;;
+    *)
+        while true; do
+            menu
+        done
+        ;;
+esac
