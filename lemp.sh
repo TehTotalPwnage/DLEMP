@@ -18,7 +18,7 @@ start() {
         echo "Starting container in development mode"
         nginx -c /etc/nginx/nginx.dev.conf &
     else
-        nginx &
+        nginx -c /etc/nginx/nginx.conf &
     fi
     PID[2]=$!
 
