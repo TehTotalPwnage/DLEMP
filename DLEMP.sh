@@ -15,6 +15,7 @@
 BUILD_CMD=(docker build)
 
 function menu {
+    cd "$(dirname "$(readlink -f "$0")")"
     if [[ $# -eq 0 ]]; then
         clear
         echo "The Docker LEMP Container Management Program (DLEMP)"
@@ -22,9 +23,9 @@ function menu {
         echo "Actions"
         echo "-------"
         echo "1) Build Docker Image"
-        echo "2) Deploy Docker Container"
+        echo "2) Deploy Docker Compose Stack"
         echo "3) Deploy Development Environment"
-        echo "4) Save Build Configuration"
+        echo "4) Manage Build Configurations"
         echo "5) Install Package Dependencies"
         echo "6) Exit"
         read -n 1 input
@@ -35,16 +36,12 @@ function menu {
             echo "Which Git repo would you like to clone onto the image?"
             echo "Give your response in the form of USERNAME/REPOSITORY (ex. TehTotalPwnage/DLEMP)"
             read repo
+            tag=${repo:`expr index "$repo" /`:256}
+            mkdir -p data/${tag}
+            cp Dockerfile data/${tag}/
+            cp -r config data/${tag}/
+            cd data/${tag}
             git clone "git@github.com:$repo" repo
-            echo "Would you like to define a custom image tag? 1) Yes 2) No"
-            read custom
-            if [ $custom == 1 ]; then
-                true
-                echo "What tag would you like to use?"
-                read tag
-            else
-                tag=${repo:`expr index "$repo" /`:256}
-            fi
             BUILD=(${BUILD_CMD[@]})
             BUILD+=("-t=${tag,,}")
             BUILD+=(.)
@@ -58,31 +55,36 @@ function menu {
             pause
             ;;
         2)
-            echo "Deploying Docker container..."
+            echo "Deploying Docker stack..."
             echo "Which image do you want to base the container off of?"
             read image
             echo "Which external port do you want to bind to the container?"
             read port
-            echo "Do you want to link a development volume to the container? Leave blank or provide a path:"
-            read volume
-            if [ -n "$volume" ]; then
-                echo "Should this container boot to the development environment setup by default? 1) Yes 2) No"
-                read startup
-                if [ $startup == 1 ]; then
-                    docker create --name "${image}_lemp" --publish $port:80 \
-                    --volume $volume:/srv/mnt --volume "${image}_mysql":/var/lib/mysql $image start dev
-                else
-                    docker create --name "${image}_lemp" --publish $port:80 \
-                    --volume $volume:/srv/mnt --volume "${image}_mysql":/var/lib/mysql $image
-                fi
-            else
-                docker create --name "${image}_lemp" --publish $port:80 \
-                --volume "${image}_env":/srv/env --volume "${image}_mysql":/var/lib/mysql --volume "${image}_storage":/srv/www/storage $image
-            fi
+            # echo "Do you want to link a development volume to the container? Leave blank or provide a path:"
+            # read volume
+            # if [ -n "$volume" ]; then
+            #     echo "Should this container boot to the development environment setup by default? 1) Yes 2) No"
+            #     read startup
+            #     if [ $startup == 1 ]; then
+            #         docker create --name "${image}_lemp" --publish $port:80 \
+            #         --volume $volume:/srv/mnt --volume "${image}_mysql":/var/lib/mysql $image start dev
+            #     else
+            #         docker create --name "${image}_lemp" --publish $port:80 \
+            #         --volume $volume:/srv/mnt --volume "${image}_mysql":/var/lib/mysql $image
+            #     fi
+            # else
+
+            # docker create --name "${image}_lemp" --publish $port:80 \
+            # --volume "${image}_env":/srv/env --volume "${image}_mysql":/var/lib/mysql --volume "${image}_storage":/srv/www/storage $image
+            # fi
+            mkdir -p data/${image}
+            cat docker-compose.yml | sed --expression "s/image_name/${image}/" --expression "s/http_port/${port}/" > data/${image}/docker-compose.yml
+            cd data/${image}
+            docker-compose up -d
             if [ $? != 0 ]; then
-                echo "Error on Docker container deployment..."
+                echo "Error on Docker stack deployment..."
             else
-                echo "Docker container deployed successfully!"
+                echo "Docker stack deployed successfully!"
             fi
             pause
             ;;
@@ -168,6 +170,9 @@ function pause {
     read -n 1
 }
 
+cd "$(dirname "$(readlink -f "$0")")"
+mkdir -p data
+
 case "$1" in
     "-c" | "--cache")
         echo "Running with cache preserved on builds..."
@@ -186,7 +191,7 @@ case "$1" in
         docker exec -it "$2" /bin/bash
         ;;
     *)
-        BUILD+=("--no-cache")
+        BUILD_CMD+=("--no-cache")
         while true; do
             menu
         done

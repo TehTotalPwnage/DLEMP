@@ -1,0 +1,31 @@
+version: "3"
+services:
+    database:
+        environment:
+            - MYSQL_DATABASE=app
+            - MYSQL_USER=laravel
+            - MYSQL_PASSWORD=laravel
+            - MYSQL_RANDOM_ROOT_PASSWORD=yes
+        image: mysql:latest
+        networks:
+            - image_name_network
+        volumes:
+            - mysql:/var/lib/mysql
+    http:
+        image: image_name
+        ports:
+            - "http_port:80"
+        networks:
+            - image_name_network
+        volumes:
+            - env:/srv/env
+            - storage:/srv/www/storage
+
+networks:
+    image_name_network:
+        driver: bridge
+
+volumes:
+    env:
+    storage:
+    mysql:

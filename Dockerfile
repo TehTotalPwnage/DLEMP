@@ -9,9 +9,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Run all package installation steps.
 RUN apt-get update
 RUN apt-get install -y php5-fpm
-RUN echo 'mysql-server-5.6 mysql-server/root_password password root' | debconf-set-selections \
-    && echo 'mysql-server-5.6 mysql-server/root_password_again password root' | debconf-set-selections \
-    && apt-get install -y mysql-server php5-mysql
+# RUN echo 'mysql-server-5.6 mysql-server/root_password password root' | debconf-set-selections \
+#     && echo 'mysql-server-5.6 mysql-server/root_password_again password root' | debconf-set-selections \
+#     && apt-get install -y mysql-server php5-mysql
 RUN apt-get install -y nginx
 RUN apt-get install -y wget
 
@@ -24,10 +24,10 @@ COPY lemp.sh /usr/local/bin/lemp
 
 # Run postinstallation scripts.
 RUN mkdir -p /srv/logs/
-RUN /bin/bash -c "/usr/bin/mysqld_safe &" \
-    && sleep 5 \
-    && mysqladmin -uroot -proot create app \
-    && mysqladmin -uroot -proot create appdev
+# RUN /bin/bash -c "/usr/bin/mysqld_safe &" \
+#     && sleep 5 \
+#     && mysqladmin -uroot -proot create app \
+#     && mysqladmin -uroot -proot create appdev
 
 # For security reasons, we want the container to be able to run without root permissions.
 RUN adduser --disabled-password --gecos '' dlemp
@@ -40,7 +40,6 @@ WORKDIR /srv/www
 RUN ./composer.phar install
 RUN ln -s /srv/www/composer.phar /srv/www/composer
 RUN mkdir -p /srv/env
-RUN cp --no-clobber .env.example /srv/env/.env
 RUN ln --symbolic /srv/env/.env /srv/www/.env
 USER root:root
 
