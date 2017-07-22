@@ -12,6 +12,8 @@
 #
 # You should have received a copy of the GNU General Public License along with DLEMP. If not, see http://www.gnu.org/licenses/.
 
+BUILD_CMD=(docker build)
+
 function menu {
     if [[ $# -eq 0 ]]; then
         clear
@@ -34,8 +36,19 @@ function menu {
             echo "Give your response in the form of USERNAME/REPOSITORY (ex. TehTotalPwnage/DLEMP)"
             read repo
             git clone "git@github.com:$repo" repo
-            tag=${repo:`expr index "$repo" /`:256}
-            docker build --no-cache -t=${tag,,} .
+            echo "Would you like to define a custom image tag? 1) Yes 2) No"
+            read custom
+            if [ $custom == 1 ]; then
+                true
+                echo "What tag would you like to use?"
+                read tag
+            else
+                tag=${repo:`expr index "$repo" /`:256}
+            fi
+            BUILD=(${BUILD_CMD[@]})
+            BUILD+=("-t=${tag,,}")
+            BUILD+=(.)
+            "${BUILD[@]}"
             if [ $? != 0 ]; then
                 echo "Error on Docker image build..."
             else
@@ -56,12 +69,15 @@ function menu {
                 echo "Should this container boot to the development environment setup by default? 1) Yes 2) No"
                 read startup
                 if [ $startup == 1 ]; then
-                    docker create --name "${image}_lemp" --publish $port:80 --volume $volume:/srv/mnt $image start dev
+                    docker create --name "${image}_lemp" --publish $port:80 \
+                    --volume $volume:/srv/mnt --volume "${image}_mysql":/var/lib/mysql $image start dev
                 else
-                    docker create --name "${image}_lemp" --publish $port:80 --volume $volume:/srv/mnt $image
+                    docker create --name "${image}_lemp" --publish $port:80 \
+                    --volume $volume:/srv/mnt --volume "${image}_mysql":/var/lib/mysql $image
                 fi
             else
-                docker create --name "${image}_lemp" --publish $port:80 $image
+                docker create --name "${image}_lemp" --publish $port:80 \
+                --volume "${image}_env":/srv/env --volume "${image}_mysql":/var/lib/mysql --volume "${image}_storage":/srv/www/storage $image
             fi
             if [ $? != 0 ]; then
                 echo "Error on Docker container deployment..."
@@ -153,6 +169,13 @@ function pause {
 }
 
 case "$1" in
+    "-c" | "--cache")
+        echo "Running with cache preserved on builds..."
+        sleep 2
+        while true; do
+            menu
+        done
+        ;;
     "cp")
         mkdir -p /tmp/dlemp
         docker cp "$2" /tmp/dlemp/tmpcp
@@ -163,6 +186,7 @@ case "$1" in
         docker exec -it "$2" /bin/bash
         ;;
     *)
+        BUILD+=("--no-cache")
         while true; do
             menu
         done
