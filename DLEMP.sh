@@ -14,6 +14,9 @@
 
 BUILD_CMD=(docker build)
 
+# Since ln requires absolute pathnames as a pointer, we store the working directory as a variable.
+WORKING_DIR="$(dirname "$(readlink -f "$0")")"
+
 function menu {
     cd "$(dirname "$(readlink -f "$0")")"
     if [[ $# -eq 0 ]]; then
@@ -46,10 +49,11 @@ function menu {
                 )
             else
                 mkdir -p data/${tag}
-                cp composer.phar data/${tag}/
-                cp Dockerfile data/${tag}/
-                cp lemp.sh data/${tag}
-                cp -r config data/${tag}/
+                # Creating symbolic links will remove the need for recopying files in the case of a script update.
+                ln -s $WORKING_DIR/composer.phar data/${tag}/composer.phar
+                ln -s $WORKING_DIR/Dockerfile data/${tag}/Dockerfile
+                ln -s $WORKING_DIR/lemp.sh data/${tag}/lemp.sh
+                ln -s $WORKING_DIR/config data/${tag}/config
                 cd data/${tag}
                 git clone "git@github.com:$repo" repo
             fi
