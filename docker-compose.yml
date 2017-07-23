@@ -10,7 +10,7 @@ services:
         networks:
             - image_name_network
         volumes:
-            - mysql:/var/lib/mysql
+            - database:/var/lib/mysql
     http:
         image: image_name
         ports:
@@ -28,4 +28,4 @@ networks:
 volumes:
     env:
     storage:
-    mysql:
+    database:
