@@ -37,11 +37,22 @@ function menu {
             echo "Give your response in the form of USERNAME/REPOSITORY (ex. TehTotalPwnage/DLEMP)"
             read repo
             tag=${repo:`expr index "$repo" /`:256}
-            mkdir -p data/${tag}
-            cp Dockerfile data/${tag}/
-            cp -r config data/${tag}/
-            cd data/${tag}
-            git clone "git@github.com:$repo" repo
+            tag=${tag,,}
+            if [ -d "data/${tag}" ]; then
+                cd data/${tag}
+                (
+                    cd repo
+                    git pull
+                )
+            else
+                mkdir -p data/${tag}
+                cp composer.phar data/${tag}/
+                cp Dockerfile data/${tag}/
+                cp lemp.sh data/${tag}
+                cp -r config data/${tag}/
+                cd data/${tag}
+                git clone "git@github.com:$repo" repo
+            fi
             BUILD=(${BUILD_CMD[@]})
             BUILD+=("-t=${tag,,}")
             BUILD+=(.)
@@ -51,7 +62,6 @@ function menu {
             else
                 echo "Docker image built successfully!"
             fi
-            rm -rf repo
             pause
             ;;
         2)
