@@ -106,9 +106,13 @@ function menu {
             echo "Deploying development environment..."
             echo "What is the absolute path to the development directory? (ex. /home/tehtotalpwnage/git/DLEMP)"
             read path
+            echo "What is the UID of your development user?"
+            read uid
+            echo "What is the GID of your development group?"
+            read gid
             # tag=${path:`expr index "$path" /`:256}
             tag=${path##/*/}
-            docker build -f "$(dirname $0)/dockerfiles/dev-dockerfile" -t=${tag,,} "$(dirname $0)"
+            docker build --build-arg uid=$uid --build-arg gid=$gid -f dockerfiles/dev-dockerfile -t=${tag,,} .
             echo "Deploying Docker container..."
             echo "Which external port do you want to bind to the container?"
             read port
