@@ -28,12 +28,7 @@ help() {
 start() {
     php5-fpm -R &
     PID[0]=$!
-    if [ "$1" == "dev" ]; then
-        echo "Starting container in development mode"
-        nginx -c /etc/nginx/nginx.dev.conf &
-    else
-        nginx -c /etc/nginx/nginx.conf &
-    fi
+    nginx -c /etc/nginx/nginx.conf &
     PID[1]=$!
 
     # Wait for these processes to complete, as they are only responsible for startup.
