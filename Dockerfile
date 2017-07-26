@@ -30,7 +30,7 @@ USER dlemp:dlemp
 RUN chmod +x /srv/www/composer.phar
 RUN chmod +x /usr/local/bin/lemp
 WORKDIR /srv/www
-RUN ./composer.phar install
+RUN ./composer.phar install --no-dev
 RUN ln -s /srv/www/composer.phar /srv/www/composer
 RUN mkdir -p /srv/env
 RUN cp --no-clobber .env.example /srv/env/.env
