@@ -13,6 +13,7 @@ RUN apt-get update
 RUN apt-get install -y php5-fpm
 RUN apt-get install -y php5-mysql
 RUN apt-get install -y nginx
+RUN apt-get install -y php5-curl
 RUN apt-get install -y wget
 
 # Sets up the server environment.

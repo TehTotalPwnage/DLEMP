@@ -42,6 +42,10 @@ function menu {
             tag=${repo:`expr index "$repo" /`:256}
             tag=${tag,,}
             if [ -d "data/${tag}" ]; then
+                cp $WORKING_DIR/composer.phar data/${tag}/
+                cp $WORKING_DIR/Dockerfile data/${tag}/
+                cp $WORKING_DIR/lemp.sh data/${tag}/
+                cp -r $WORKING_DIR/config data/${tag}/
                 cd data/${tag}
                 (
                     cd repo
@@ -49,11 +53,11 @@ function menu {
                 )
             else
                 mkdir -p data/${tag}
-                # Creating symbolic links will remove the need for recopying files in the case of a script update.
-                ln -s $WORKING_DIR/composer.phar data/${tag}/composer.phar
-                ln -s $WORKING_DIR/Dockerfile data/${tag}/Dockerfile
-                ln -s $WORKING_DIR/lemp.sh data/${tag}/lemp.sh
-                ln -s $WORKING_DIR/config data/${tag}/config
+                # Symlinks seem nice until you realize they copy nothing of substance.
+                cp $WORKING_DIR/composer.phar data/${tag}/
+                cp $WORKING_DIR/Dockerfile data/${tag}/
+                cp $WORKING_DIR/lemp.sh data/${tag}/
+                cp -r $WORKING_DIR/config data/${tag}/
                 cd data/${tag}
                 git clone "git@github.com:$repo" repo
             fi
@@ -74,23 +78,6 @@ function menu {
             read image
             echo "Which external port do you want to bind to the container?"
             read port
-            # echo "Do you want to link a development volume to the container? Leave blank or provide a path:"
-            # read volume
-            # if [ -n "$volume" ]; then
-            #     echo "Should this container boot to the development environment setup by default? 1) Yes 2) No"
-            #     read startup
-            #     if [ $startup == 1 ]; then
-            #         docker create --name "${image}_lemp" --publish $port:80 \
-            #         --volume $volume:/srv/mnt --volume "${image}_mysql":/var/lib/mysql $image start dev
-            #     else
-            #         docker create --name "${image}_lemp" --publish $port:80 \
-            #         --volume $volume:/srv/mnt --volume "${image}_mysql":/var/lib/mysql $image
-            #     fi
-            # else
-
-            # docker create --name "${image}_lemp" --publish $port:80 \
-            # --volume "${image}_env":/srv/env --volume "${image}_mysql":/var/lib/mysql --volume "${image}_storage":/srv/www/storage $image
-            # fi
             mkdir -p data/${image}
             cat docker-compose.yml | sed --expression "s/image_name/${image}/" --expression "s/http_port/${port}/" > data/${image}/docker-compose.yml
             cd data/${image}
@@ -112,11 +99,14 @@ function menu {
             read gid
             # tag=${path:`expr index "$path" /`:256}
             tag=${path##/*/}
-            docker build --build-arg uid=$uid --build-arg gid=$gid -f dockerfiles/dev-dockerfile -t=${tag,,} .
+            docker build --build-arg uid=$uid --build-arg gid=$gid -f dockerfiles/dev-dockerfile -t=${tag,,}_dev .
             echo "Deploying Docker container..."
             echo "Which external port do you want to bind to the container?"
             read port
-            docker create --name "${tag,,}_dev" --publish $port:80 --volume $path:/srv/mnt ${tag,,}
+            mkdir -p data/${tag,,}_dev
+            cat dev-docker-compose.yml | sed --expression "s#repo_path#${path}#" --expression "s/image_name/${tag,,}_dev/" --expression "s/http_port/${port}/" > data/${tag,,}_dev/docker-compose.yml
+            cd data/${tag,,}_dev
+            docker-compose up -d
             if [ $? != 0 ]; then
                 echo "Error on development container deployment..."
             else
