@@ -1,5 +1,9 @@
 version: "3"
 services:
+    chrome:
+        image: selenium/standalone-chrome
+        networks:
+            - image_name_network
     database:
         environment:
             - MYSQL_DATABASE=app
