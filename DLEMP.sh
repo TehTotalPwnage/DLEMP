@@ -13,9 +13,44 @@
 # You should have received a copy of the GNU General Public License along with DLEMP. If not, see http://www.gnu.org/licenses/.
 
 BUILD_CMD=(docker build)
+CACHE_UPDATE=false
 
 # Since ln requires absolute pathnames as a pointer, we store the working directory as a variable.
 WORKING_DIR="$(dirname "$(readlink -f "$0")")"
+
+function args {
+    case "$1" in
+        "-n" | "--no-cache")
+            echo "Running with cache ignored on builds..."
+            BUILD_CMD+=("--no-cache")
+            sleep 2
+            while true; do
+                menu
+            done
+            ;;
+        "cp")
+            mkdir -p /tmp/dlemp
+            docker cp "$2" /tmp/dlemp/tmpcp
+            editor /tmp/dlemp/tmpcp
+            docker cp /tmp/dlemp/tmpcp "$2"
+            ;;
+        "bash")
+            docker exec -it "$2" /bin/bash
+            ;;
+        *)
+            while true; do
+                menu
+            done
+            ;;
+    esac
+}
+
+function cache {
+    echo "Cache is outdated. Running with --no-cache enabled..."
+    BUILD_CMD+=("--no-cache")
+    CACHE_UPDATE=true
+    sleep 2
+}
 
 function menu {
     cd "$(dirname "$(readlink -f "$0")")"
@@ -164,6 +199,9 @@ function menu {
             echo "If you like this project, please star it on GitHub: https://github.com/TehTotalPwnage/DLEMP"
             echo "If you'd like to support me, consider donating on Patreon: https://patreon.com/tehtotalpwnage"
             pause
+            if [[ $CACHE_UPDATE = true ]]; then
+                date +%D > data/CACHE
+            fi
             exit 0
             ;;
         *)
@@ -180,28 +218,18 @@ function pause {
 
 cd "$(dirname "$(readlink -f "$0")")"
 mkdir -p data
-
-case "$1" in
-    "-c" | "--cache")
-        echo "Running with cache preserved on builds..."
-        sleep 2
-        while true; do
-            menu
-        done
-        ;;
-    "cp")
-        mkdir -p /tmp/dlemp
-        docker cp "$2" /tmp/dlemp/tmpcp
-        editor /tmp/dlemp/tmpcp
-        docker cp /tmp/dlemp/tmpcp "$2"
-        ;;
-    "bash")
-        docker exec -it "$2" /bin/bash
-        ;;
-    *)
-        BUILD_CMD+=("--no-cache")
-        while true; do
-            menu
-        done
-        ;;
-esac
+touch data/CACHE
+CACHE="$(cat data/CACHE)"
+if [[ -z "$CACHE" ]]; then
+    cache
+    args "$@"
+else
+    IFS='/' read -ra CACHE <<< $CACHE
+    IFS='/' read -ra NOW <<< $(date +%D)
+    CACHE=$((10#${CACHE[0]} * 30 + 10#${CACHE[1]} + 10#${CACHE[2]} * 365))
+    NOW=$((10#${NOW[0]} * 30 + 10#${NOW[1]} + 10#${NOW[2]} * 365))
+    if [[ $(($NOW - $CACHE)) -gt 7 ]]; then
+        cache
+    fi
+    args "$@"
+fi
