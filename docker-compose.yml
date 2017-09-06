@@ -18,14 +18,23 @@ services:
         networks:
             - image_name_network
         volumes:
+            - app:/srv/www
             - env:/srv/env
             - storage:/srv/www/storage
+    php:
+        image: dlemp-php
+        networks:
+            - image_name_network
+        volumes:
+            - app:/srv/www
+            - env:/srv/env
 
 networks:
     image_name_network:
         driver: bridge
 
 volumes:
+    app:
     env:
     storage:
     database:

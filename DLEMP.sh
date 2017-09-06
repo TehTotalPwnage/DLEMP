@@ -94,7 +94,7 @@ function menu {
                 cp $WORKING_DIR/lemp.sh data/${tag}/
                 cp -r $WORKING_DIR/config data/${tag}/
                 cd data/${tag}
-                git clone "git@github.com:$repo" repo
+                git clone "https://github.com/$repo" repo
             fi
             BUILD=(${BUILD_CMD[@]})
             BUILD+=("-t=${tag,,}")
@@ -111,11 +111,18 @@ function menu {
             echo "Deploying Docker stack..."
             echo "Which image do you want to base the container off of?"
             read image
+            echo "What name do you want to give to the stack?"
+            read name
+            if [ -z "$name" ]; then
+                echo "Name not provided. Reverting to default..."
+                name=$image
+            fi
             echo "Which external port do you want to bind to the container?"
             read port
             mkdir -p data/${image}
-            cat docker-compose.yml | sed --expression "s/image_name/${image}/" --expression "s/http_port/${port}/" > data/${image}/docker-compose.yml
-            cd data/${image}
+            mkdir -p data/${image}/${name}
+            cat docker-compose.yml | sed --expression "s/image_name/${image}/" --expression "s/http_port/${port}/" > data/${image}/${name}/docker-compose.yml
+            cd data/${image}/${name}
             docker-compose up -d
             if [ $? != 0 ]; then
                 echo "Error on Docker stack deployment..."
@@ -134,12 +141,16 @@ function menu {
             read gid
             # tag=${path:`expr index "$path" /`:256}
             tag=${path##/*/}
-            docker build --build-arg uid=$uid --build-arg gid=$gid -f dockerfiles/dev-dockerfile -t=${tag,,}_dev .
-            echo "Deploying Docker container..."
+            # docker build --build-arg uid=$uid --build-arg gid=$gid -f dockerfiles/dev-dockerfile -t=${tag,,}_dev .
+            # echo "Deploying Docker container..."
             echo "Which external port do you want to bind to the container?"
             read port
+            echo "Deploying Docker container..."
             mkdir -p data/${tag,,}_dev
-            cat dev-docker-compose.yml | sed --expression "s#repo_path#${path}#" --expression "s/image_name/${tag,,}_dev/" --expression "s/http_port/${port}/" > data/${tag,,}_dev/docker-compose.yml
+            cat dev-docker-compose.yml | sed --expression "s#repo_path#${path}#g" --expression "s/image_name/${tag,,}_dev/" \
+            --expression "s/http_port/${port}/" --expression "s/user_id/$uid/" --expression "s/group_id/$gid/" \
+            > data/${tag,,}_dev/docker-compose.yml
+            # cat dev-docker-compose.yml | sed --expression "s#repo_path#${path}#" --expression "s/image_name/${tag,,}_dev/" --expression "s/http_port/${port}/" > data/${tag,,}_dev/docker-compose.yml
             cd data/${tag,,}_dev
             docker-compose up -d
             if [ $? != 0 ]; then

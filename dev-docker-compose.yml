@@ -16,9 +16,21 @@ services:
         volumes:
             - database:/var/lib/mysql
     http:
+        build:
+            context: .
+            dockerfile: dockerfiles/Dockerfile.dev
+            args:
+                uid: user_id
+                gid: group_id
         image: image_name
         ports:
             - "http_port:80"
+        networks:
+            - image_name_network
+        volumes:
+            - repo_path:/srv/www
+    php:
+        image: dlemp-php
         networks:
             - image_name_network
         volumes:
