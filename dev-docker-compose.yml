@@ -18,7 +18,7 @@ services:
     http:
         build:
             context: .
-            dockerfile: dockerfiles/Dockerfile.dev
+            dockerfile: ./Dockerfile.dev
             args:
                 uid: user_id
                 gid: group_id

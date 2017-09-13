@@ -123,6 +123,8 @@ function menu {
             mkdir -p data/${image}/${name}
             cat docker-compose.yml | sed --expression "s/image_name/${image}/" --expression "s/http_port/${port}/" > data/${image}/${name}/docker-compose.yml
             cd data/${image}/${name}
+            docker-compose pull
+            docker-compose build
             docker-compose up -d
             if [ $? != 0 ]; then
                 echo "Error on Docker stack deployment..."
@@ -147,6 +149,8 @@ function menu {
             read port
             echo "Deploying Docker container..."
             mkdir -p data/${tag,,}_dev
+            cp -r config data/${tag,,}_dev/
+            cp dockerfiles/Dockerfile.dev data/${tag,,}_dev/Dockerfile.dev
             cat dev-docker-compose.yml | sed --expression "s#repo_path#${path}#g" --expression "s/image_name/${tag,,}_dev/" \
             --expression "s/http_port/${port}/" --expression "s/user_id/$uid/" --expression "s/group_id/$gid/" \
             > data/${tag,,}_dev/docker-compose.yml

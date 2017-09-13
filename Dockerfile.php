@@ -13,3 +13,5 @@ RUN docker-php-ext-install tokenizer
 # https://lists.alpinelinux.org/alpine-aports/2526.html
 RUN apk add --no-cache libxml2-dev
 RUN docker-php-ext-install xml
+
+RUN docker-php-ext-install zip

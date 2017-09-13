@@ -14,9 +14,8 @@ RUN mkdir -p /srv/logs/
 
 # For security reasons, we want the container to be able to run without root permissions.
 RUN addgroup -g $gid dlemp
-RUN adduser -D -g '' -G $gid --u $uid dlemp
+RUN adduser -D -g '' -G dlemp -u $uid dlemp
 RUN chown -R dlemp:dlemp /srv
-USER dlemp:dlemp
 
 # The script is still being run as root, but the processes will be under the dlemp user.
 USER root:root
